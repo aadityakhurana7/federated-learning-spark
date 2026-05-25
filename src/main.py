@@ -74,10 +74,11 @@ def run_federated_learning():
         round_time = time.time() - start_time
         print(f"Round {round_num} completed in {round_time:.2f}s. Global Accuracy: {acc:.4f}")
         
-        # Store metrics
+        # Store metrics (including the live model brain for the frontend)
         metrics['rounds'].append(round_num)
         metrics['accuracy'].append(acc)
         metrics['time_taken'].append(round_time)
+        metrics['latest_weights'] = new_global_weights['coef'].flatten().tolist()
         
         with open(os.path.join(config.LOGS_DIR, 'metrics.json'), 'w') as f:
             json.dump(metrics, f)

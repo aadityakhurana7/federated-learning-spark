@@ -13,11 +13,11 @@ LOGS_DIR = os.path.join(BASE_DIR, "logs")
 METRICS_FILE = os.path.join(LOGS_DIR, "metrics.json")
 BASELINE_FILE = os.path.join(LOGS_DIR, "baseline_metrics.json")
 
-st.title("🚀 Distributed Federated Learning via Apache Spark")
-st.markdown("### 💡 The Problem Being Solved:")
-st.info("Traditional ML requires sending massive datasets to a central server, causing network congestion and privacy risks. **Our solution uses Big Data concepts (Spark + Federated Learning) to train models directly on local nodes in parallel, sending ONLY tiny model updates.**")
+st.title("Distributed Federated Learning System (Apache Spark)")
+st.markdown("### Architecture Overview")
+st.info("This dashboard monitors a privacy-preserving federated learning pipeline. By utilizing Apache Spark for distributed computation, models are trained locally on worker nodes. Only parameter updates are transmitted to the server, eliminating the need for centralized data collection and significantly reducing network overhead.")
 
-tab1, tab2 = st.tabs(["⚡ Big Data & System Proof (For Evaluator)", "📊 ML Performance"])
+tab1, tab2, tab3 = st.tabs(["System Architecture Analysis", "Model Evaluation Metrics", "Global Parameter Visualization"])
 
 def load_metrics():
     metrics = None
@@ -42,7 +42,13 @@ while True:
     metrics, baseline = load_metrics()
     
     if metrics and len(metrics['rounds']) > 0 and baseline:
-        df = pd.DataFrame(metrics)
+        # Only use the sequence lists for the Pandas DataFrame
+        df_metrics = {
+            'rounds': metrics['rounds'],
+            'accuracy': metrics['accuracy'],
+            'time_taken': metrics['time_taken']
+        }
+        df = pd.DataFrame(df_metrics)
         current_round = metrics['rounds'][-1]
         
         # Calculate dynamic byte savings
@@ -50,37 +56,37 @@ while True:
         baseline_mb = baseline_bytes / (1024*1024)
         
         with tab1:
-            st.header("Proof of Big Data Concepts")
+            st.header("Distributed Processing Analysis")
             
             # 1. Data Locality & Partitioning
-            st.subheader("1. Data Locality (Distributed Storage)")
-            st.write("Instead of one massive database, the dataset is distributed across Spark worker nodes. The data NEVER leaves the local node.")
+            st.subheader("1. Data Partitioning & Locality")
+            st.write("The dataset is partitioned across Spark worker nodes. Training data is processed locally and is never transmitted over the network.")
             # Mock data distribution based on 5 clients
             client_data = {"Client Node": [f"Spark Worker {i}" for i in range(1, 6)], "Rows of Data": [1600]*5}
-            pie_fig = px.pie(client_data, values='Rows of Data', names='Client Node', title='Dataset Partitioned Across Spark Cluster', hole=0.3)
+            pie_fig = px.pie(client_data, values='Rows of Data', names='Client Node', title='Dataset Partitioning Across Spark Cluster', hole=0.3)
             st.plotly_chart(pie_fig, use_container_width=True)
             
             # 2. Parallel Processing
-            st.subheader("2. Parallel Processing (Spark Executor Compute)")
-            st.write("Because we use Spark RDDs (`rdd.map`), all workers compute their models at the exact same time, rather than sequentially.")
+            st.subheader("2. Parallel Execution (Spark RDD Compute)")
+            st.write("Worker nodes compute local gradients concurrently using Spark RDD mapping operations.")
             
             # 3. Communication Savings (The main value prop)
-            st.subheader("3. Communication Optimization")
+            st.subheader("3. Communication Cost Optimization")
             col1, col2 = st.columns(2)
             with col1:
-                st.metric(label="Data Transferred (Centralized Baseline)", value=f"{baseline_mb:.2f} MB", delta="- Massive Congestion", delta_color="inverse")
+                st.metric(label="Data Transferred (Centralized Baseline)", value=f"{baseline_mb:.2f} MB", delta="- High Congestion", delta_color="inverse")
             with col2:
                 st.metric(label="Data Transferred (Federated Spark)", value="~168 Bytes", delta="+ 99.9% Bandwidth Saved", delta_color="normal")
             
             savings_df = pd.DataFrame({
-                "System": ["Centralized ML (Send Raw Data)", "Federated Spark (Send Model Weights)"],
+                "System": ["Centralized ML (Raw Data)", "Federated Spark (Model Weights)"],
                 "Bytes Transferred per Round": [baseline_bytes, 168]
             })
-            bar_fig = px.bar(savings_df, x="System", y="Bytes Transferred per Round", color="System", title="Network Bandwidth Consumption (Lower is Better)")
+            bar_fig = px.bar(savings_df, x="System", y="Bytes Transferred per Round", color="System", title="Network Bandwidth Consumption")
             st.plotly_chart(bar_fig, use_container_width=True)
 
         with tab2:
-            st.header("Machine Learning Metrics")
+            st.header("Evaluation Metrics")
             m_col1, m_col2, m_col3 = st.columns(3)
             with m_col1:
                 st.metric(label="Current Round", value=current_round)
@@ -99,6 +105,26 @@ while True:
             
             fig_acc.update_layout(title="Global Model Convergence vs Baseline", xaxis_title="Communication Round", yaxis_title="Test Accuracy", yaxis_range=[0, 1])
             st.plotly_chart(fig_acc, use_container_width=True)
+            
+        with tab3:
+            st.header("Global Parameter Evolution")
+            st.write("Real-time visualization of the aggregated model coefficients across communication rounds. Dynamic updates indicate the convergence of the distributed stochastic gradient descent algorithm.")
+            
+            if 'latest_weights' in metrics:
+                weights = metrics['latest_weights']
+                
+                # Format into a 4x5 grid for visual appeal
+                if len(weights) == 20:
+                    weight_matrix = [weights[i:i+5] for i in range(0, 20, 5)]
+                    
+                    fig_heat = px.imshow(weight_matrix, text_auto=".4f", color_continuous_scale="RdBu_r", 
+                                         title=f"Aggregated Model Coefficients (Round {current_round})",
+                                         labels=dict(color="Coefficient Value"))
+                    st.plotly_chart(fig_heat, use_container_width=True)
+                else:
+                    st.write(f"Current Parameters: {weights}")
+            else:
+                st.info("Awaiting parameter data...")
 
     else:
         st.info("Waiting for federated learning to start... (Run `python -m src.main`)")
