@@ -1,0 +1,8 @@
+pyspark>=3.4.0
+pandas
+numpy
+scikit-learn
+matplotlib
+plotly
+streamlit
+findspark

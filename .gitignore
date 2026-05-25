@@ -1,0 +1,21 @@
+# Virtual Environment
+venv/
+env/
+.env
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Project Data & Logs (We don't want to upload large data or model checkpoints)
+data/*.csv
+logs/*.json
+logs/*.pkl
+logs/spark_checkpoints/
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
